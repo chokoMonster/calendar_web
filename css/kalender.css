@@ -1,0 +1,57 @@
+.tbl {
+	font-family: arial, verdana, sans-serif;
+	border: 0.1px solid grey;
+	padding: 0px;
+	border-collapse: collapse;
+}
+
+.tbl_title {
+	font-size: 13px;
+	height: 42px;
+	text-align: center;
+	background-color: #424242;
+	color:#FFFFFF;
+}
+.tbl_move {
+	font-size: 20px;
+	background-color: #424242;
+	color:#FFFFFF;
+}
+.tbl_move:hover {
+	font-size: 34px;
+	cursor:pointer;
+}
+
+.tbl_zelle {
+	padding: 1px;
+	border: 0.1px solid grey;
+	width: 100px;
+	background-color: white;
+}
+
+.tbl_head {
+	height: 40px;
+	color:#FFFFFF;
+	background-color: #DF7401;
+	font-size: 12px;
+	border: 0.1px solid white;
+	text-align: center;
+}
+
+.tbl_tage {
+	height: 50px;
+	color:#333333;
+	font-size: 10px;
+	vertical-align: top;
+}
+
+.tbl_eintrag {
+	font-size: 11px;
+	font-weight: bold;
+	color: #444444;/*#434343;*/
+}
+.tbl_eintrag:hover {
+	/*font-size: 13px;*/
+	cursor: pointer;
+	color: #000000;
+}

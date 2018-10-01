@@ -1,0 +1,84 @@
+body {
+	background-image: url("../images/login.jpg");
+	background-size: cover;/*100% auto;*/
+	/*background-repeat: no-repeat;*/
+}
+
+#form_login {
+	position:absolute;
+	top: 30%;
+	left: 40%;
+	/*transform: translate(-50%, -50%);*/
+}
+
+table {
+	font-family: arial, verdana, sans-serif;
+	font-size: 14px;
+	border: 0.1px solid grey;
+	padding: 20px;
+	width: 280px;
+	/*height: 250px;*/
+	background-color: #F3E2A9;
+}
+
+input {
+	margin: 4px 10px 4px 10px;
+	padding: 5px 0px 5px 15px;
+	/*oben-rechts-unten-links*/
+	width: 190px;
+}
+
+input[type=button] {
+	font-size: 14px;
+	color:#FFFFFF;
+	background-color:#DF7401;
+	margin: 4px 10px 15px 10px;
+	width: 207px;
+}
+
+.titel {
+	font-size: 20px;
+	text-align: center;
+	padding: 15px 10px 10px 10px;
+}
+
+
+.ausgabe {
+	border: 1px solid transparent;
+	/*border-radius: 4px;*/
+	width: 198px;
+	margin: 4px 0px 4px 10px;
+	padding: 7px 0px 7px 8px;
+	font-size: 12px;
+
+	color: #B45F04;
+	background-color: #F5ECCE;
+	border-color: #F5D0A9;
+}
+/*.ausgabe {
+	font-size: 12px;
+	color: #DF3A01;
+	padding: 3px 0px 4px 14px;
+}*/
+
+
+
+.loader {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #DF7401;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    margin: 1px 0px 4px 100px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+input[type=text]:focus,input[type=password]:focus {
+	border: 1px solid #FE9A2E;
+}

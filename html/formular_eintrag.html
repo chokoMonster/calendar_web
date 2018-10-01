@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+
+		<!--<script src="../bootstrap-3.3.5/js/bootstrap.min.js"></script>-->
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap-theme.css">
+
+		<link rel="stylesheet" type="text/css" href="../css/formular.css" />
+		<script src="../javascript/kalender.js"></script>
+		
+		<script type="text/javascript">
+			let sonderzeichen = ['trainer', 'gegner', 'bemerkung'];
+			
+			function setButtons() {
+				if(sessionStorage.rechte==0) {
+					let anweisung_btn = "<input type='button' class='btn btn-default' value='Neu' onclick='formNeu()'>";
+					anweisung_btn += "<input type='Submit' class='btnMitte1 btn btn-warning' name='speichern' value='Speichern' id='speichern'>";
+					anweisung_btn += "<input type='button' class='btnMitte2 btn btn-warning' name='loeschen' value='L&ouml;schen' id='loeschen' onclick='loesche()'>";
+					anweisung_btn += "<input type='button' class='btn btn-default' value='Abbrechen' onclick='formReset()'>";
+
+					/*let anweisung_btn = "<input type='button' class='btn-default' value='Neu' onclick='formNeu()'>";
+					anweisung_btn += "<input type='Submit' class='btnMitte1 btn-default' name='speichern' value='Speichern' id='speichern'>";
+					anweisung_btn += "<input type='button' class='btnMitte2 btn-warning' name='loeschen' value='L&ouml;schen' id='loeschen' onclick='loesche()'>";
+					anweisung_btn += "<input type='button' class='btn-warning' value='Abbrechen' onclick='formReset()'>";*/
+
+					document.getElementById("btn_form").innerHTML = anweisung_btn;
+				} else {
+					ids_form.pop();
+					ids_form.pop();
+				}
+			}
+			
+			function standardWerte() {
+				let d = new Date();
+				let tag = d.getDate();
+				let monat = d.getMonth()+1;
+				if(tag<10) {
+					tag = '0' + tag;
+				}
+				if(monat<10) {
+					monat = '0' + monat;
+				}
+				document.getElementById('datum').value = (tag + '.' + monat + '.' + d.getFullYear());
+				
+				let daten = ['beginn_h', 'beginn_min', 'ende_h', 'ende_min'];
+				for(let d in daten) {
+					if(document.getElementById(daten[d]).value == "") {
+						document.getElementById(daten[d]).value = '00';
+					}
+				}	
+				document.getElementById('datum_save').value="";			
+				document.getElementById('nr').value="";
+				document.getElementById('gegner').value="";
+				document.getElementById('bemerkung').value="";
+				document.getElementById('passiv').checked = false;
+				document.getElementById('int4').checked=true;
+				document.getElementById('training').checked=true;
+			}
+			
+			function formNeu() {
+				formVorbereiten();
+				standardWerte();
+				document.getElementById('loeschen').setAttribute('disabled', true);
+			}
+			
+			function setDisabled() {
+				for (let i in ids_form) {
+					if(sessionStorage.rechte==0) {
+						document.getElementById(ids_form[i]).setAttribute('disabled', true);
+					} else {
+						document.getElementById(ids_form[i]).setAttribute('readonly', true);
+						//$(':radio:not(:checked)').attr('disabled', true);
+					}						
+				}
+			}
+			
+			function formReset() {
+				document.getElementById('form_eintrag').reset();
+				removeFarbe();
+				setDisabled();
+				
+				document.getElementById('datum_save').value="";
+				for(let i=0; i<10; i++) {
+					document.getElementById('int'+i).removeAttribute('checked');
+				}
+				document.getElementById('training').removeAttribute('checked');
+				document.getElementById('spiel').removeAttribute('checked');
+				document.getElementById('gegner_feld').setAttribute('hidden', true);
+
+				let elem_alter = document.getElementById('leer1');
+				elem_alter.setAttribute('selected', true);
+				elem_alter.removeAttribute('hidden');
+				let elem_kategorie = document.getElementById('leer2');
+				elem_kategorie.setAttribute('selected', true);
+				elem_kategorie.removeAttribute('hidden');
+				let elem_liga = document.getElementById('leer3');
+				elem_liga.setAttribute('selected', true);
+				elem_liga.removeAttribute('hidden');
+			}
+
+			function pruefeKategorie() {
+				if(document.getElementById('kategorie').options[document.getElementById('kategorie').selectedIndex].value == "mannschaft" ||
+				   document.getElementById('kategorie').options[document.getElementById('kategorie').selectedIndex].value == "sonstige2") {
+					document.getElementById('liga_feld').removeAttribute('hidden');
+				} else {
+					document.getElementById('liga_feld').setAttribute('hidden', true);
+				}
+			}
+
+			function trainingSelected() {
+				document.getElementById('gegner_feld').setAttribute('hidden', true);
+				document.getElementById('kategorie').removeAttribute('disabled');
+			}
+			
+			function spielSelected() {
+				document.getElementById('gegner_feld').removeAttribute('hidden');
+				document.getElementById('kategorie').selectedIndex = 0;
+				document.getElementById('kategorie').setAttribute('disabled', true);
+			}
+
+			function setCookie(name) {
+				let dt = new Date();
+				dt.setTime(dt.getTime() + (1000*24*60*60*1000));
+				//document.cookie = name + "=" + value;
+				let wert=1;
+				if(getCookie(name) != null) {
+					wert = parseInt(getCookie(name)) + 1;
+				} else {
+					if(getCookie("trainer_alle") == null) {
+						document.cookie = 'trainer_alle=' + name + '; expires=' + dt.toGMTString();
+					} else {
+						if(getCookie('trainer_alle').indexOf(name) === -1) {
+							document.cookie = 'trainer_alle=' + getCookie('trainer_alle') + '&' + name;
+						}
+					}
+				}
+				document.cookie = name + '=' + wert + '; expires=' + dt.toGMTString();
+			}
+			
+			function getCookie(name) {
+				let data = document.cookie.split(";");
+				let cookies = {};
+				for(let i=0; i<data.length; i++) {
+					let tmp = data[i].split("=");
+					cookies[tmp[0].trim()] = tmp[1];
+				}
+				//if (name) {
+					return (cookies[name] || null);
+				/*} else {
+					return cookies;
+				}*/
+			}
+			
+			function loesche() {
+				let anfrage_del;
+				if (window.XMLHttpRequest) {
+					anfrage_del=new XMLHttpRequest();
+				} else {
+					anfrage_del=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				
+				anfrage_del.open("GET","../php/delEintrag.php?datum="+document.getElementById('datum').value+"&nr="+document.getElementById('nr').value,true);
+				anfrage_del.send();
+				anfrage_del.onreadystatechange=function()
+				{
+					let resp = anfrage_del.responseText;
+					parent.kalender.location.reload(true);
+					
+					formReset();
+					if(resp=='ok') {
+						//document.getElementById("ausgabe").style.color = "#088A08";
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-success'>Eintrag wurde gel&ouml;scht!</div>";
+					} else {
+						//document.getElementById("ausgabe").style.color = "#DF0101";
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>resp</div>";
+					}
+				}		
+			}
+			
+			function pruefen()
+			{
+				document.getElementById("ausgabe").innerHTML = "";
+				let check = false;
+				for (let p in pflichtfelder) {
+					if(document.getElementById(pflichtfelder[p]).value=='') {
+						check = true;
+						document.getElementById(pflichtfelder[p]).style.backgroundColor  = "#FFCCCC";
+					} else {
+						document.getElementById(pflichtfelder[p]).style.removeProperty("background-color");
+					}
+				}
+				if(document.getElementById("spiel").checked && document.getElementById("gegner").value=='') {
+					check = true;
+					document.getElementById("gegner").style.backgroundColor  = "#FFCCCC";
+				} else {
+					document.getElementById("gegner").style.removeProperty("background-color");
+				}
+				if(document.getElementById("passiv").checked && document.getElementById("bemerkung").value=='') {
+					check = true;
+					document.getElementById("bemerkung").style.backgroundColor  = "#FFCCCC";
+				} else {
+					document.getElementById("bemerkung").style.removeProperty("background-color");
+				}
+				if(check) {
+					//document.getElementById("ausgabe").style.color = "#DF0101";
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Bitte f&uuml;llen Sie alle Pflichtfelder!</div>";//"Bitte f&uuml;llen Sie alle Pflichtfelder!";
+					return false;
+				}
+				
+				let wertDate = document.getElementById('datum').value.split('.');
+				if(wertDate.length!=3) {
+					check = true;
+				}
+				for(let i in wertDate) {
+					if(isNaN(wertDate[i])) {
+						check = true;
+					} else {
+						parseInt(wertDate[i])
+					}
+				}
+				if(wertDate[2]<2000 || wertDate[2]>2099 || wertDate[1]<1 || wertDate[1]>12 
+				|| wertDate[0]<1 || !isValidDate(wertDate[2], wertDate[1]-1, wertDate[0])) {
+					check = true;
+				}
+				if(check) {
+					//document.getElementById("ausgabe").style.color = "#DF0101";
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Datum ung&uuml;ltig! Format: dd.mm.yyyy</div>";
+					return false;
+				}
+						
+				let stunde = ['beginn_h', 'ende_h'];
+				for (let s in stunde) {
+					let element = document.getElementById(stunde[s]);
+					if(isNaN(element.value) || element.value<0 || element.value>24 || element.value.indexOf('.')!==-1) {
+						check = true;
+						element.style.backgroundColor  = "#FFCCCC";
+					} else {
+						element.style.removeProperty("background-color");
+					}
+				}
+				let minute = ['beginn_min', 'ende_min'];
+				for (let m in minute) {
+					let element = document.getElementById(minute[m]);
+					if(isNaN(element.value) || element.value<0 || element.value>=60 || element.value.indexOf('.')!==-1) {
+						check = true;
+						element.style.backgroundColor  = "#FFCCCC";
+					} else {
+						element.style.removeProperty("background-color");
+					}
+				}
+				if(parseInt(document.getElementById('beginn_h').value)>parseInt(document.getElementById('ende_h').value)
+				|| (parseInt(document.getElementById('beginn_h').value)==parseInt(document.getElementById('ende_h').value)
+				&& parseInt(document.getElementById('beginn_min').value)>=parseInt(document.getElementById('ende_min').value))) {
+					check = true;
+				}
+				if(check) {
+					//document.getElementById("ausgabe").style.color = "#DF0101";
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Uhrzeit ung&uuml;ltig!</div>";
+					return false;
+				}
+				
+				for (let s in sonderzeichen) {
+					if(document.getElementById(sonderzeichen[s]).value.indexOf('&')!==-1 || document.getElementById(sonderzeichen[s]).value.indexOf(';')!==-1) {
+						check = true;
+						document.getElementById(sonderzeichen[s]).value = document.getElementById(sonderzeichen[s]).value.replace(";", ",");
+						document.getElementById(sonderzeichen[s]).value = document.getElementById(sonderzeichen[s]).value.replace("&", "und");
+						document.getElementById(sonderzeichen[s]).style.backgroundColor  = "#A9D0F5";
+					} else {
+						document.getElementById(sonderzeichen[s]).style.removeProperty("background-color");
+					}
+				}
+				if(check) {
+					//document.getElementById("ausgabe").style.color = "#DF0101";
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Bitte vermeiden Sie '&' und ';'</div>";
+					return false;
+				}
+				
+				return true;
+			}
+			
+			function absenden() {
+				/*if(document.getElementById('trainer').value == "") {
+					setCookie(document.getElementById('trainer').value.trim());
+				}*/
+
+				if(document.getElementById('datum_save').value!=document.getElementById('datum').value && document.getElementById('nr').value!="") {
+					let anfrage_del_old;
+					if (window.XMLHttpRequest) {
+						anfrage_del_old=new XMLHttpRequest();
+					} else {
+						anfrage_del_old=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					anfrage_del_old.open("GET","../php/delEintrag.php?datum="+document.getElementById('datum_save').value+"&nr="+document.getElementById('nr').value,true);
+					anfrage_del_old.send();
+					document.getElementById('nr').value="";
+				}
+				
+				let anfrage_save;
+				if (window.XMLHttpRequest) {
+					anfrage_save=new XMLHttpRequest();
+				} else {
+					anfrage_save=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				let daten = new FormData(document.getElementById("form_eintrag"));
+
+				anfrage_save.onreadystatechange=function() {
+					let resp = anfrage_save.responseText;
+					formReset();
+					
+					if(resp=='ok') {
+						//document.getElementById("ausgabe").style.color = "#088A08";
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-success'>Eintrag wurde gespeichert!</div>";
+					} else {
+						//document.getElementById("ausgabe").style.color = "#DF0101";
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>resp</div>";
+					}
+					parent.kalender.location.reload(true);
+				}
+				anfrage_save.open("POST", "../php/setEintrag.php");
+				anfrage_save.send(daten);
+			}
+			
+			window.addEventListener("load", function () 
+			{
+				document.getElementById("form_eintrag").addEventListener("submit", function (event) {
+					event.preventDefault();
+					let check = pruefen();
+					document.getElementById("kategorie").removeAttribute('disabled');
+					if(check){absenden();}
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<form action="../php/setEintrag.php" method="POST" name="form_eintrag" id="form_eintrag">
+			<table id='tbl_formular'>
+				<!--<tr>
+					<td colspan="10" hidden><input type="text" name="benutzer" id="benutzer"></td>
+				</tr>-->
+				<tr>
+					<td hidden><input type="text" name="datum_save" id="datum_save"></td>
+				</tr>
+
+				<tr>
+					<td>Datum:</td>
+					<td colspan="4"><input type="text" class="bt datum form-control input-sm" name="datum" id="datum" maxlength="10"></td>
+					<!--<td colspan="5" class="passiv"><input type="checkbox" name="passiv" id="passiv" value="1">passiv</td>-->
+					<td colspan="5"><div class="funkyradio funkyradio-danger">
+			            <input type="checkbox" name="passiv" value="1" id="passiv"/>
+			            <label for="passiv">passiv</label>
+			        </div></td>
+					<td align="right"><input type="text" class="bt nr form-control input-sm" name="nr" id="nr" readonly></td>
+				</tr>
+				
+				<tr>
+					<td>Beginn:</td>
+					<td colspan="4"><input type="text" class="bt uhrzeit form-control input-sm" name="beginn_h" id="beginn_h" maxlength="2">&nbsp;:&nbsp;<input type="text" class="bt uhrzeit form-control input-sm" name="beginn_min" id="beginn_min" maxlength="2"></td>
+				</tr>
+				
+				<tr>
+					<td>Ende:</td>
+					<td colspan="4"><input type="text" class="bt uhrzeit form-control input-sm" name="ende_h" id="ende_h" maxlength="2">&nbsp;:&nbsp;<input type="text" class="bt uhrzeit form-control input-sm" name="ende_min" id="ende_min" maxlength="2"></td>
+				</tr>
+				<!--class="bt test form-control"
+					class="bt btn btn-warning dropdown-toggle"
+				-->
+				<tr>
+					<td>Altersklasse:</td>
+					<td colspan="10">
+						<select name="alter" id="alter" class="bt btn btn-default dropdown-toggle">
+							<option value="u14" id="u14">U14</option>
+							<option value="u16" id="u16">U16</option>
+							<!--<option value="u18" id="u18">U18</option>
+							<option value="u20" id="u20">U20</option>-->
+							<option value="senioren" id="senioren">Senioren</option>
+							<option value="sonstige1" id="sonstige1">Sonstiges</option>
+							<option value="leer1" id="leer1" selected></option>
+						</select>
+					</td>
+				</tr>
+
+				<tr>
+					<td>Kategorie:</td>
+					<td colspan="10">
+						<select name="kategorie" id="kategorie" class="bt btn btn-default dropdown-toggle" onclick="pruefeKategorie()">
+							<option value="mannschaft" id="mannschaft">Mannschaft</option>
+							<option value="individual" id="individual">Individual</option>
+							<option value="stuetzpunkt" id="stuetzpunkt">St&uuml;tzpunkt</option>
+							<option value="athletik" id="athletik">Athletik</option>
+							<option value="wurf" id="wurf">Wurf</option>
+							<option value="ausdauer" id="ausdauer">Ausdauer</option>
+							<option value="reha" id="reha">Rehabilitation</option>
+							<option value="sonstige2" id="sonstige2">Sonstiges</option>
+							<option value="leer2" id="leer2" selected></option>
+						</select>
+					</td>
+				</tr>
+				
+				<tr id="liga_feld" hidden>
+					<td>Liga:</td>
+					<td colspan="10">
+						<select name="liga" id="liga" class="bt btn btn-default dropdown-toggle">
+							<!--<option value="dbbl" id="dbbl">Bundesliga</option>
+							<option value="dbbl2" id="dbbl2">2. Bundesliga</option>-->
+							<option value="rl" id="rl">Regionalliga</option>
+							<option value="wnbl" id="wnbl">WNBL</option>
+							<option value="byl" id="byl">Bayernliga</option>
+							<option value="bzl" id="bzl">Bezirksliga</option>
+							<!--<option value="natio" id="natio">Nationalmannschaft</option>-->
+							<option value="sonstige3" id="sonstige3">Sonstiges</option>
+							<option value="leer3" id="leer3" selected></option>
+						</select>
+					</td>
+				</tr>
+				
+				<tr>
+					<td>Trainer:</td>
+					<td colspan="10"><input type="text" class="bt inpFeld form-control input-sm" name="trainer" id="trainer" maxlength="40"></td>
+				</tr>
+				
+				<tr>
+					<td valign="top">Intensit&auml;t:</td>
+					<td><input type="radio" name="intensitaet" value="0" id="int0"><br>1</td>
+					<td><input type="radio" name="intensitaet" value="1" id="int1"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="2" id="int2"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="3" id="int3"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="4" id="int4"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="5" id="int5"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="6" id="int6"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="7" id="int7"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="8" id="int8"><br>&nbsp;</td>
+					<td><input type="radio" name="intensitaet" value="9" id="int9"><br>10</td>
+				</tr>
+					
+				<!--<tr>
+					<td>Art:</td>
+					<td colspan="8"><div class="btn-group" data-toggle="buttons">
+						<label class="btn btn-primary active"><input type="radio" name="art" value="training" id="training" onclick="document.getElementById('gegner_feld').setAttribute('hidden', true)" autocomplete="off" checked>Training
+							<span class="glyphicon glyphicon-ok"></span></label>
+						<label class="btn btn-primary"><input type="radio" name="art" value="spiel" id="spiel" onclick="document.getElementById('gegner_feld').removeAttribute('hidden')" autocomplete="off">Spiel
+						<span class="glyphicon glyphicon-ok"></span></label></div>
+					</td>
+				</tr>-->
+				<tr>
+					<td>Art:</td>
+					<td colspan="4"><div class="funkyradio funkyradio-warning">
+			            <input type="radio" name="art" value="training" id="training" onclick="trainingSelected()"/>
+			            <label for="training">Training</label>
+			        </div></td>
+				    <td colspan="4"><div class="funkyradio funkyradio-warning">
+			            <input type="radio" name="art" value="spiel" id="spiel" onclick="spielSelected()"/>
+			            <label for="spiel">Spiel</label>
+				    </div></td>
+				</tr>
+				
+				<tr id="gegner_feld" hidden>
+					<td>Gegner:</td>
+					<td colspan="10"><input type="text" class="bt inpFeld form-control input-sm" name="gegner" id="gegner" maxlength="40"></td>
+				</tr>
+					
+				<tr>
+					<td>Bemerkung:</td>
+					<td colspan="10"><input type="text" class="bt inpFeld form-control input-sm" name="bemerkung" id="bemerkung" maxlength="40"></td>
+				</tr>
+				
+				<tr></tr>
+				
+				<tr><td colspan="11" id="ausgabe"></td></tr>
+				
+				<tr>
+					<td colspan="11" id="btn_form"></td>
+				</tr>
+			</table>
+		</form>
+	
+		<script type='text/javascript'>
+			setButtons();
+			//document.getElementById('benutzer').setAttribute("value", sessionStorage.benutzer);
+			setDisabled();
+		</script>
+	</body>
+</html>

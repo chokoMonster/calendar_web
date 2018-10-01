@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Trainingsplaner</title>
+
+		<!--<link rel="icon" type="image/vnd.microsoft.icon" href="images/calendar.ico">-->
+		<link rel="icon" type="image/png" href="../images/icon.png">
+
+		<!--<link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap.min.css">
+		<!--<link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap-theme.css">-->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+		<link rel="stylesheet" type="text/css" href="../css/menu_website.css" />
+		<script src="../javascript/kalender.js"></script>
+
+		<script type="text/javascript">
+			function setBenutzer() {
+				let anfrage_benutzer;
+				if (window.XMLHttpRequest) {
+					anfrage_benutzer=new XMLHttpRequest();
+				} else {
+					anfrage_benutzer=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				
+				anfrage_benutzer.open("GET","../php/getBenutzer.php",true);
+				anfrage_benutzer.send();
+
+				anfrage_benutzer.onreadystatechange=function()
+				{
+					document.getElementById('benutzer').innerHTML = "<i class='fa fa-user'></i></span>" + anfrage_benutzer.responseText;
+				}
+			}
+
+			function setAdmin()
+			{
+				if(sessionStorage.rechte==1) {
+					let anfrage_admin;
+					if (window.XMLHttpRequest) {
+						anfrage_admin=new XMLHttpRequest();
+					} else {
+						anfrage_admin=new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					
+					anfrage_admin.open("GET","../php/getSpieler.php",true);
+					anfrage_admin.send();
+	
+					anfrage_admin.onreadystatechange=function()
+					{			
+						let auswahl_spieler = "";
+						let spieler = anfrage_admin.responseText.split(";");
+						
+						for (let s=0; s<spieler.length-1; s++) {
+							let wert_s = spieler[s].split("&");
+							auswahl_spieler += "<option value='" + wert_s[0] + "' id='" + wert_s[0] + "'>" + wert_s[1] + "</option>";
+						}
+						document.getElementById('spieler').innerHTML = auswahl_spieler;
+						
+						//start();
+					}
+
+					let menu_admin = "<button onclick='openMenu(\"topmenu\")' class='dropbtn'>Men&uuml;</button>";
+					menu_admin += "<div id='topmenu' class='dropdown-content'>";
+					menu_admin += "<a id='neu' onclick='spielerBearbeiten(this.id)'>Neuer Spieler</a>";
+					menu_admin += "<a id='aendern' onclick='spielerBearbeiten(this.id)'>Spieler &auml;ndern</a>";
+					menu_admin += "<a onclick='spielerTeilen()'>Spieler teilen</a>";
+					menu_admin += "<a onclick='zuordnungAufheben()'>Zuordnung aufheben</a>";
+					menu_admin += "<a onclick='spielerLoeschen()'>Spieler l&ouml;schen</a></div>";
+					document.getElementById("menu_drop").innerHTML = menu_admin;
+
+
+					let profil_admin = "<a id='profil' onclick='spielerBearbeiten(this.id)'>Profil bearbeiten</a>";
+					profil_admin += "<a onclick='parent.location=\"../php/logout.php\"'>Abmelden</a>";
+					document.getElementById("profilMenu").innerHTML = profil_admin;
+
+				} else {
+					document.getElementById('spieler').setAttribute('hidden', true);
+					document.getElementById("profilMenu").innerHTML = "<a onclick='parent.location=\"../php/logout.php\"'>Abmelden</a>";
+				}
+			}
+			
+			function spielerBearbeiten(modus)
+			{
+				if(modus=='neu') {
+					document.getElementById('spieler_aendern').value = "";
+				} else if(modus=='profil') {
+					document.getElementById('spieler_aendern').value = "profilAendern";
+				} else {
+					document.getElementById('spieler_aendern').value = document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].value;
+				}
+				parent.document.getElementById('formular').src='formular_spieler.html';
+			}
+
+			function spielerTeilen()
+			{
+				document.getElementById('spieler_aendern').value = document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].value;
+				parent.document.getElementById('formular').src='formular_spieler_teilen.html';
+			}
+
+			function zuordnungAufheben() {
+				let anfrage_del;
+				if (window.XMLHttpRequest) {
+					anfrage_del=new XMLHttpRequest();
+				} else {
+					anfrage_del=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				
+				anfrage_del.open("GET","../php/delZuordnung.php?spieler="+document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].value,true);
+				
+				if(!confirm("Wollen Sie die Beobachtung des Spielers "+document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].innerHTML+" wirklich beenden?")) {
+					return;
+				}
+				
+				anfrage_del.send();
+				anfrage_del.onreadystatechange=function()
+				{
+					let resp = anfrage_del.responseText;
+					parent.kalender.location.reload(true);
+				}
+			}
+			
+			function spielerLoeschen()
+			{
+				let anfrage_del;
+				if (window.XMLHttpRequest) {
+					anfrage_del=new XMLHttpRequest();
+				} else {
+					anfrage_del=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				
+				anfrage_del.open("GET","../php/delSpieler.php?id="+document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].value,true);
+				
+				if(!confirm("Wollen Sie den Benutzer "+document.getElementById('spieler').options[document.getElementById('spieler').selectedIndex].innerHTML+" wirklich löschen?\nAlle dessen Einträge gehen dabei verloren!")) {
+					return;
+				}
+				
+				anfrage_del.send();
+				anfrage_del.onreadystatechange=function()
+				{
+					let resp = anfrage_del.responseText;
+					parent.kalender.location.reload(true);
+				}
+			}
+
+
+			function openMenu(menu) {
+			    document.getElementById(menu).classList.toggle("show");
+			}
+
+			window.onclick = function(event) {
+			  if (!event.target.matches('.dropbtn')) {
+			    var dropdowns = document.getElementsByClassName("dropdown-content");
+			    var i;
+			    for (i = 0; i < dropdowns.length; i++) {
+			      var openDropdown = dropdowns[i];
+			      if (openDropdown.classList.contains('show')) {
+			        openDropdown.classList.remove('show');
+			      }
+			    }
+			  }
+			}
+
+		</script>
+
+	</head>
+
+
+	<body>
+
+
+	<input type="text" id="spieler_aendern" value="" hidden>
+	<div class="navbar">
+		<div class="dropdown">
+			<select class="auswahl" name="spieler" id="spieler" onchange="ladeKalender()"> 	</select>
+		</div>
+		<!-- <div class="dropdown">
+		<button class="dropbtn" onclick="myFunction()">Dropdown</button>
+	<span class="glyphicon glyphicon-user">-->
+		<div class="dropdown" id="menu_drop"></div>
+		<!--</div> 
+		<a onclick="parent.location='../php/logout.php'">Abmelden</a>-->
+
+		<div class="dropdown profil">
+			<button onclick='openMenu("profilMenu")' class='dropbtn' id='benutzer'></button>
+			<div id='profilMenu' class='dropdown-content'></div>
+		</div>
+	</div>
+
+	<br>
+
+	<iframe src="kal_website.html" width="65%" height="450" frameborder=0 align="top" name="kalender" id="kalender"></iframe>
+	<iframe src="formular_eintrag.html" width="33%" height="520" frameborder=1 name="formular" id="formular"></iframe>
+
+
+		<script>
+			setBenutzer();
+			setAdmin();
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+
+		<!--<script src="../bootstrap-3.3.5/js/bootstrap.min.js"></script>-->
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap-theme.css">
+
+		<link rel="stylesheet" type="text/css" href="../css/formular.css" />
+		<script src="../javascript/bCrypt.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+			
+			function ladeAdmin()
+			{
+				document.getElementById('teilnehmer').value = parent.document.getElementById('spieler_aendern').value;
+				document.getElementById('teilnehmer').setAttribute('disabled', true);
+				
+				let anfrage_admin;
+				if (window.XMLHttpRequest) {
+					anfrage_admin=new XMLHttpRequest();
+				} else {
+					anfrage_admin=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+
+				anfrage_admin.open("GET","../php/getAdmin.php",true);
+				anfrage_admin.send();
+				
+				anfrage_admin.onreadystatechange=function()
+				{	
+					if(anfrage_admin.responseText==""){
+						return;
+					}
+					let admin_resp = anfrage_admin.responseText.split(";");
+
+					let auswahl_admin = "";
+					for(let i=0; i<admin_resp.length-1; i++) {
+						auswahl_admin += "<option value='" + admin_resp[i] + "' id='" + admin_resp[i] + "'>" + admin_resp[i] + "</option>";
+					}
+					document.getElementById('admin').innerHTML = auswahl_admin;
+				}
+			}
+		
+			function absenden() 
+			{
+				let anfrage_save;
+				if (window.XMLHttpRequest) {
+					anfrage_save=new XMLHttpRequest();
+				} else {
+					anfrage_save=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				let daten = new FormData(document.getElementById("form_eintrag"));
+
+				anfrage_save.onreadystatechange=function() 
+				{
+					let resp = anfrage_save.responseText;
+					
+					document.getElementById('teilnehmer').setAttribute('disabled', true);
+					if(resp=='ok') {
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-success'>Daten wurden gespeichert!</div>";
+					} else {
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>resp</div>";
+					}
+					//parent.kalender.location.reload(true);
+				}
+				anfrage_save.open("POST", "../php/setZuordnung.php");
+				anfrage_save.send(daten);
+			}
+			
+			window.addEventListener("load", function () 
+			{
+				document.getElementById("form_eintrag").addEventListener("submit", function (event) {
+					event.preventDefault();
+					document.getElementById('teilnehmer').removeAttribute('disabled');
+					absenden();
+				});
+			});			
+		</script>
+	</head>
+	<body>
+		<form action="../php/setZuordnung.php" method="POST" name="form_eintrag" id="form_eintrag">
+			<table id='tbl_formular'>
+				<tr>
+					<td class="breite_bz">Teilnehmer:</td>
+					<td><input type="text" class="bt datum form-control input-sm" name="teilnehmer" id="teilnehmer"></td>
+				</tr>
+				
+				<tr>
+					<td class="breite_bz">Admin:</td>
+					<td><select name="admin" id="admin" class="bt btn btn-default dropdown-toggle"></select></td>
+				</tr>
+				
+				<tr></tr>
+				
+				<tr><td colspan="2" id="ausgabe"></td></tr>
+				
+				<tr>
+					<td><input type="Submit" class="btn btn-warning" name="speichern" value="Speichern" id="speichern"></td>
+					<td><input type="button" class="btn btn-default" value="Abbrechen" onclick="javascript:parent.document.getElementById('formular').src='formular_eintrag.html'"></td>
+				</tr>
+			</table>
+		</form>
+	
+		<script type='text/javascript'>
+			ladeAdmin();
+		</script>
+	</body>
+</html>

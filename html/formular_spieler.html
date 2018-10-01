@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+
+		<!--<script src="../bootstrap-3.3.5/js/bootstrap.min.js"></script>-->
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="../bootstrap-3.3.5/css/bootstrap-theme.css">
+
+		<link rel="stylesheet" type="text/css" href="../css/formular.css" />
+		<script src="../javascript/kalender.js"></script>
+		<script src="../javascript/bCrypt.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+			let pfelder = ['user', 'nname', 'vname', 'verein'];
+			
+			function felderLeeren()
+			{
+				document.getElementById('form_eintrag').reset();
+				document.getElementById('ausgabe').innerHTML = "";
+				for (let p in pfelder) {
+					document.getElementById(pfelder[p]).style.removeProperty("background-color");
+				}
+			}
+			
+			function ladeSpieler()
+			{
+				document.getElementById('modus').value = parent.document.getElementById('spieler_aendern').value;
+				document.getElementById('user').setAttribute('disabled', true);
+				document.getElementById('neu').setAttribute('disabled', true);
+				
+				let selectedSpieler = parent.document.getElementById('spieler_aendern').value;
+				anfrage.open("GET","../php/getSelectedSpieler.php?id="+selectedSpieler,true);
+				anfrage.send();
+				
+				anfrage.onreadystatechange=function()
+				{	
+					if(anfrage.responseText==""){
+						return;
+					}
+					let spieler_werte = anfrage.responseText.split("&");
+					let geburtstag="";
+					
+					if(spieler_werte[4]!="" && spieler_werte[4]!="0000-00-00") {
+						let dt = spieler_werte[4].split('-');
+						geburtstag=dt[2]+"."+dt[1]+"."+dt[0];
+					}
+					document.getElementById('user').value = spieler_werte[0];
+					document.getElementById('nname').value = spieler_werte[1];
+					document.getElementById('vname').value = spieler_werte[2];
+					document.getElementById('verein').value = spieler_werte[3];
+					document.getElementById('gebdatum').value = geburtstag;
+					if(spieler_werte[5]==1) {
+						document.getElementById('standard').removeAttribute("checked");
+						document.getElementById('admin').setAttribute("checked", true);
+					}
+				}
+			}
+			
+			function pruefen()
+			{
+				document.getElementById("ausgabe").innerHTML = "";
+				let check = false;
+				for (let p in pfelder) {
+					if(document.getElementById(pfelder[p]).value=='') {
+						check = true;
+						document.getElementById(pfelder[p]).style.backgroundColor  = "#FFCCCC";
+					} else {
+						document.getElementById(pfelder[p]).style.removeProperty("background-color");
+					}
+				}
+				if(check) {
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Bitte f&uuml;llen Sie alle Pflichtfelder!</div>";
+					return false;
+				}
+				
+				for (let p in pfelder) {
+					if(document.getElementById(pfelder[p]).value.indexOf('&')!==-1 || document.getElementById(pfelder[p]).value.indexOf(';')!==-1) {
+						check = true;
+						document.getElementById(pfelder[p]).value = document.getElementById(pfelder[p]).value.replace(";", ",");
+						document.getElementById(pfelder[p]).value = document.getElementById(pfelder[p]).value.replace("&", "und");
+						document.getElementById(pfelder[p]).style.backgroundColor  = "#A9D0F5";
+					} else {
+						document.getElementById(pfelder[p]).style.removeProperty("background-color");
+					}
+				}
+				if(check) {
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Bitte vermeiden Sie '&' und ';'</div>";
+					return false;
+				}
+				
+				document.getElementById("user").value = document.getElementById("user").value.toLowerCase();
+				
+				if(document.getElementById('gebdatum').value != "") {
+					let wertDate = document.getElementById('gebdatum').value.split('.');
+					if(wertDate.length!=3) {
+						check = true;
+					}
+					for(let i in wertDate) {
+						if(isNaN(wertDate[i])) {
+							check = true;
+						} else {
+							parseInt(wertDate[i])
+						}
+					}
+					let d = new Date();
+					if(wertDate[2]>d.getFullYear() || wertDate[1]<1 || wertDate[1]>12 || wertDate[0]<1 
+					|| !isValidDate(wertDate[2], wertDate[1]-1, wertDate[0])) {
+						check = true;
+					}
+					if(check) {
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Geburtsdatum ung&uuml;ltig! Format: dd.mm.yyyy</div>";
+						return false;
+					}
+				}		
+				
+				if(document.getElementById("modus").value=="" && document.getElementById("passwort").value == "") {
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Bitte vergeben Sie ein Passwort!</div>";
+					document.getElementById("passwort").style.backgroundColor  = "#FFCCCC";
+					return false;
+				} else if(document.getElementById('passwort').value != document.getElementById('passwort2').value) {
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Passw&ouml;rter stimmen nicht &uuml;berein!</div>";
+					document.getElementById("passwort").style.backgroundColor  = "#FFCCCC";
+					document.getElementById("passwort2").style.backgroundColor  = "#FFCCCC";
+					return false;
+				} else {
+					document.getElementById("passwort").style.removeProperty("background-color");
+					document.getElementById("passwort2").style.removeProperty("background-color");
+				}
+				
+				return true;
+			}
+			
+			function result(hash)
+			{
+				document.getElementById('passwort').value = hash;
+				absenden();
+			}
+	  
+			function crypt()
+			{     
+				let salt;
+				try {
+					salt = gensalt(13);
+				} catch(err) {
+					console.log(err);
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Fehler beim Generieren des Passworts!</div>";
+					return false;
+				}
+			  
+				try {
+					hashpw(document.getElementById('passwort').value, salt, result);
+				} catch(err) {
+					console.log(err);
+					document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>Fehler beim Generieren des Passworts!</div>";
+					return false;
+				}
+			}
+		
+			function absenden() 
+			{
+				let anfrage_save;
+				if (window.XMLHttpRequest) {
+					anfrage_save=new XMLHttpRequest();
+				} else {
+					anfrage_save=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				let daten = new FormData(document.getElementById("form_eintrag"));
+
+				anfrage_save.onreadystatechange=function() 
+				{
+					let resp = anfrage_save.responseText;
+					
+					//document.getElementById('user').setAttribute('disabled', true);
+					if(resp=='ok') {
+						document.getElementById('user').setAttribute('disabled', true);
+
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-success'>Daten wurden gespeichert!</div>";
+
+						parent.kalender.location.reload(true);
+						if(document.getElementById('modus').value == "") {
+							document.getElementById('modus').value = "aendern";
+							document.getElementById('neu').setAttribute('disabled', true);
+						}
+					} else {
+						document.getElementById("ausgabe").innerHTML = "<div class='alert alert-danger'>resp</div>";
+					}
+					/*parent.kalender.location.reload(true);
+					if(document.getElementById('modus').value == "") {
+						document.getElementById('modus').value = "aendern";
+						document.getElementById('neu').setAttribute('disabled', true);
+					}*/
+					document.getElementById("passwort").value = "";
+					document.getElementById("passwort2").value = "";
+				}
+				anfrage_save.open("POST", "../php/setSpieler.php");
+				anfrage_save.send(daten);
+			}
+			
+			window.addEventListener("load", function () 
+			{
+				document.getElementById("form_eintrag").addEventListener("submit", function (event) {
+					event.preventDefault();
+					document.getElementById('user').removeAttribute('disabled');
+					let check = pruefen();
+					if(check){
+						if(document.getElementById("passwort").value != "") {
+							crypt();
+						}else {
+							absenden();
+						}
+					}
+				});
+			});			
+		</script>
+	</head>
+	<body>
+		<form action="../php/setEintrag.php" method="POST" name="form_eintrag" id="form_eintrag">
+			<table id='tbl_formular'>
+				<tr>
+					<td colspan="3" hidden><input type="text" name="modus" id="modus"></td>
+				</tr>
+				
+				<tr>
+					<td>Benutzername:</td>
+					<td colspan="2"><input type="text" class="bt datum form-control input-sm" name="user" id="user" maxlength="8"></td>
+				</tr>
+				
+				<tr>
+					<td>Nachname:</td>
+					<td colspan="2"><input type="text" class="bt inpFeld form-control input-sm" name="nname" id="nname" maxlength="40"></td>
+				</tr>
+				
+				<tr>
+					<td>Vorname:</td>
+					<td colspan="2"><input type="text" class="bt inpFeld form-control input-sm" name="vname" id="vname" maxlength="40"></td>
+				</tr>
+				
+				<tr>
+					<td>Verein:</td>
+					<td colspan="2"><input type="text" class="bt inpFeld form-control input-sm" name="verein" id="verein" maxlength="40"></td>
+				</tr>
+				
+				<tr>
+					<td>Geburtstag:</td>
+					<td colspan="2"><input type="text" class="bt datum form-control input-sm" name="gebdatum" id="gebdatum" maxlength="10"></td>
+				</tr>
+				
+				<tr>
+					<td>Passwort:</td>
+					<td colspan="2"><input type="password" class="bt inpFeld form-control input-sm" name="passwort" id="passwort" maxlength="15"></td>
+				</tr>
+				
+				<tr>
+					<td>Passwort wiederholen:</td>
+					<td colspan="2"><input type="password" class="bt inpFeld form-control input-sm" name="passwort2" id="passwort2" maxlength="15"></td>
+				</tr>
+					
+				<tr>
+					<td>Rechte:</td>
+					<!--<td><input type="radio" name="rechte" value="0" id="standard" checked>&nbsp;&nbsp;Standard</td>
+					<td><input type="radio" name="rechte" value="1" id="admin">&nbsp;&nbsp;Admin</td>-->
+					<td><div class="funkyradio funkyradio-warning">
+			            <input type="radio" name="rechte" value="0" id="standard" checked/>
+			            <label for="standard">Standard</label>
+			        </div></td>
+				    <td><div class="funkyradio funkyradio-warning">
+			            <input type="radio" name="rechte" value="1" id="admin"/>
+			            <label for="admin">Admin</label>
+				    </div></td>
+				</tr>
+				
+				<tr></tr>
+				
+				<tr><td colspan="3" id="ausgabe"></td></tr>
+				
+				<tr>
+					<td colspan="3" id="btn_form">
+						<input type="button" class='btn btn-default' value="Neu" id="neu" onclick="felderLeeren()">
+						<input type="Submit" class="btnMitte1 btn btn-warning" name="speichern" value="Speichern" id="speichern">
+						<input type="button" class='btn btn-default' value="Abbrechen" onclick="javascript:parent.document.getElementById('formular').src='formular_eintrag.html'">
+					</td>
+				</tr>
+			</table>
+		</form>
+	
+		<script type='text/javascript'>
+			if(parent.document.getElementById('spieler_aendern').value != "") {
+				ladeSpieler();
+			}
+		</script>
+		
+		<p id=''></p>
+	</body>
+</html>

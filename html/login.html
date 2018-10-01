@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Trainingsplaner - Login</title>
+
+		<link rel="stylesheet" type="text/css" href="../css/login_website.css" />
+		<script src="../javascript/bCrypt.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">				
+			var salt = "";
+		 	
+		 	function keyPress(event) {
+		 		if(event.keyCode==13) {
+		 			getSalt();
+		 		}
+		 	}
+
+			function result(hash){    
+				document.getElementById('passwort').value = hash;
+				
+				let anfrage_login;
+				if (window.XMLHttpRequest) {
+					anfrage_login=new XMLHttpRequest();
+				} else {
+					anfrage_login=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				let daten = new FormData(document.getElementById("form_login"));
+
+				anfrage_login.onreadystatechange=function() 
+				{
+					let resp = anfrage_login.responseText;		
+					if(resp.indexOf('success') !== -1) {
+						let daten = resp.split('&');
+						sessionStorage.rechte = daten[1];
+						//sessionStorage.benutzer = daten[0];
+						window.location.href = "../html/start_website.html";
+					} else {
+						document.getElementById("ausgabe").innerHTML = "<div class='ausgabe'>Diese Anmeldedaten sind ung&uuml;tig!</div>";//"Diese Anmeldedaten sind ung&uuml;tig!";
+						document.getElementById("passwort").value = "";
+					}
+				}
+				anfrage_login.open("POST", "../php/server_login.php");
+				anfrage_login.send(daten);
+			}
+		 
+			function getSalt() {
+				document.getElementById("ausgabe").innerHTML = "<div class='loader'></div>";
+
+
+				salt = "";
+		 
+				let anfrage_salt;
+				if (window.XMLHttpRequest) {
+					anfrage_salt=new XMLHttpRequest();
+				} else {
+					anfrage_salt=new ActiveXObject("Microsoft.XMLHTTP");
+				}
+
+				anfrage_salt.open("POST","../php/salt.php",true);
+				
+				anfrage_salt.onreadystatechange = function() {
+					if(this.readyState == 4 && this.status == 200) {
+						//if(this.responseText != '') {
+							salt = this.responseText;  
+							login();
+						//}
+					}
+				}
+				var postdata= 'user='+ document.getElementById('user').value;
+
+				anfrage_salt.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				anfrage_salt.send(postdata);
+			}
+		 
+			function login() {
+				try {
+					hashpw(document.getElementById('passwort').value, salt, result);
+				} catch(err) {
+					//document.getElementById("ausgabe").innerHTML = err;
+					document.getElementById("ausgabe").innerHTML = "<div class='ausgabe'>Benutzername ist unbekannt!</div>";//"Benutzername ist unbekannt!";
+					return;
+				}
+			}
+		</script>
+	</head>
+
+	<body>
+		<form action="../php/server_login.php" method="POST" name="form_login" id="form_login">		
+			<table id="tbl_login">
+				<tr><td class="titel">Login</td></tr>				
+				<tr><td id="ausgabe"></td></tr>		
+				<tr><td><input type="text" name="user" id="user" onkeyup="keyPress(event)" maxlength="8" placeholder="Benutzername"></td></tr>
+				<tr><td><input type="password" name="passwort" id="passwort" onkeyup="keyPress(event)" maxlength="15" placeholder="Passwort"></td></tr>			
+				<tr><td><input type="button" id="login" value="Anmelden" onclick="getSalt()"></td></tr>
+			</table>			
+		</form> 
+	</body>
+</html>
