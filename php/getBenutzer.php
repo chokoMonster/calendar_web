@@ -11,9 +11,9 @@
 		$statement->bind_param("s", $_SESSION['user']);
 		$statement->execute();	 
 		$result = $statement->get_result();
-		 
+		
 		while($row = $result->fetch_assoc()) {
-		  echo $row['VNAME'], " ", $row['NNAME'];
+			echo json_encode($row);
 		}
 		
 		mysqli_close($mysqli);

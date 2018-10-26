@@ -28,16 +28,17 @@
 				anfrage_admin.send();
 				
 				anfrage_admin.onreadystatechange=function()
-				{	
-					if(anfrage_admin.responseText==""){
-						return;
+				{
+					let json_admin = new Array();
+					if(anfrage_admin.readyState==4 && anfrage_admin.status==200) {
+						json_admin = JSON.parse(anfrage_admin.responseText);
 					}
-					let admin_resp = anfrage_admin.responseText.split(";");
 
 					let auswahl_admin = "";
-					for(let i=0; i<admin_resp.length-1; i++) {
-						auswahl_admin += "<option value='" + admin_resp[i] + "' id='" + admin_resp[i] + "'>" + admin_resp[i] + "</option>";
-					}
+					for (i in json_admin) {
+						let j_admin = json_admin[i].BENUTZER;
+						auswahl_admin += "<option value='" + j_admin + "' id='" + j_admin + "'>" + j_admin + "</option>";
+					}					
 					document.getElementById('admin').innerHTML = auswahl_admin;
 				}
 			}

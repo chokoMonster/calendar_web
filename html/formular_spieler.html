@@ -35,26 +35,37 @@
 				
 				anfrage.onreadystatechange=function()
 				{	
-					if(anfrage.responseText==""){
-						return;
-					}
-					let spieler_werte = anfrage.responseText.split("&");
-					let geburtstag="";
+					if(anfrage.readyState==4 && anfrage.status==200) {
+						let json_player = JSON.parse(anfrage.responseText);
 					
-					if(spieler_werte[4]!="" && spieler_werte[4]!="0000-00-00") {
-						let dt = spieler_werte[4].split('-');
-						geburtstag=dt[2]+"."+dt[1]+"."+dt[0];
-					}
-					document.getElementById('user').value = spieler_werte[0];
-					document.getElementById('nname').value = spieler_werte[1];
-					document.getElementById('vname').value = spieler_werte[2];
-					document.getElementById('verein').value = spieler_werte[3];
-					document.getElementById('gebdatum').value = geburtstag;
-					if(spieler_werte[5]==1) {
-						document.getElementById('standard').removeAttribute("checked");
-						document.getElementById('admin').setAttribute("checked", true);
+						let geburtstag="";
+						if(json_player.GEBURTSTAG!="" && json_player.GEBURTSTAG!="0000-00-00") {
+							json_player.GEBURTSTAG = new Date(json_player.GEBURTSTAG);
+							geburtstag=parseDate(json_player.GEBURTSTAG);
+						}
+						document.getElementById('user').value = json_player.BENUTZER;
+						document.getElementById('nname').value = json_player.NNAME;
+						document.getElementById('vname').value = json_player.VNAME;
+						document.getElementById('verein').value = json_player.VEREIN;
+						document.getElementById('gebdatum').value = geburtstag;
+						if(json_player.RECHTE==1) {
+							document.getElementById('standard').removeAttribute("checked");
+							document.getElementById('admin').setAttribute("checked", true);
+						}
 					}
 				}
+			}
+
+			function parseDate(date) {
+				let day = date.getDate();
+				if(day<10) {
+					day = "0" + day;
+				}
+				let month = date.getMonth()+1;
+				if(month<10) {
+					month = "0" + month;
+				}
+				return day + "." + month + "." + date.getFullYear();
 			}
 			
 			function pruefen()

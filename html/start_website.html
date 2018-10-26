@@ -28,31 +28,36 @@
 
 				anfrage_benutzer.onreadystatechange=function()
 				{
-					document.getElementById('benutzer').innerHTML = "<i class='fa fa-user'></i></span>" + anfrage_benutzer.responseText;
+					if(anfrage_benutzer.readyState==4 && anfrage_benutzer.status==200) {
+						let json_user = JSON.parse(anfrage_benutzer.responseText);
+						document.getElementById('benutzer').innerHTML = "<i class='fa fa-user'></i></span>" + json_user.VNAME + " " + json_user.NNAME;
+					}
 				}
 			}
 
 			function setAdmin()
 			{
 				if(sessionStorage.rechte==1) {
-					let anfrage_admin;
+					let anfrage_spieler;
 					if (window.XMLHttpRequest) {
-						anfrage_admin=new XMLHttpRequest();
+						anfrage_spieler=new XMLHttpRequest();
 					} else {
-						anfrage_admin=new ActiveXObject("Microsoft.XMLHTTP");
+						anfrage_spieler=new ActiveXObject("Microsoft.XMLHTTP");
 					}
 					
-					anfrage_admin.open("GET","../php/getSpieler.php",true);
-					anfrage_admin.send();
+					anfrage_spieler.open("GET","../php/getSpieler.php",true);
+					anfrage_spieler.send();
 	
-					anfrage_admin.onreadystatechange=function()
-					{			
+					anfrage_spieler.onreadystatechange=function()
+					{
+						let json_spieler = new Array();
+						if(anfrage_spieler.readyState==4 && anfrage_spieler.status==200) {
+							json_spieler = JSON.parse(anfrage_spieler.responseText);
+						}
+
 						let auswahl_spieler = "";
-						let spieler = anfrage_admin.responseText.split(";");
-						
-						for (let s=0; s<spieler.length-1; s++) {
-							let wert_s = spieler[s].split("&");
-							auswahl_spieler += "<option value='" + wert_s[0] + "' id='" + wert_s[0] + "'>" + wert_s[1] + "</option>";
+						for (j in json_spieler) {
+							auswahl_spieler += "<option value='" + json_spieler[j].BENUTZER + "' id='" + json_spieler[j].BENUTZER + "'>" + json_spieler[j].VNAME + " " + json_spieler[j].NNAME + "</option>";
 						}
 						document.getElementById('spieler').innerHTML = auswahl_spieler;
 						
