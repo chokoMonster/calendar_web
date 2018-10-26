@@ -15,9 +15,11 @@
 		$statement->bind_param("s", $id);
 		$statement->execute();
 		$result = $statement->get_result();
-		 
+
 		while($row = $result->fetch_assoc()) {
-		  echo $row['BENUTZER'], "&", $row['NNAME'], "&", $row['VNAME'] , "&", $row['VEREIN'] , "&", $row['GEBURTSTAG'], "&", $row['RECHTE'];
+			echo json_encode($row);
 		}
+		
+		mysqli_close($mysqli);
 	}
 ?>

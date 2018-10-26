@@ -16,7 +16,7 @@
 		 		}
 		 	}
 
-			function result(hash){    
+			function result(hash) {    
 				document.getElementById('passwort').value = hash;
 				
 				let anfrage_login;
@@ -29,16 +29,17 @@
 
 				anfrage_login.onreadystatechange=function() 
 				{
-					let resp = anfrage_login.responseText;		
-					if(resp.indexOf('success') !== -1) {
-						let daten = resp.split('&');
-						sessionStorage.rechte = daten[1];
-						//sessionStorage.benutzer = daten[0];
-						window.location.href = "../html/start_website.html";
-					} else {
-						document.getElementById("ausgabe").innerHTML = "<div class='ausgabe'>Diese Anmeldedaten sind ung&uuml;tig!</div>";//"Diese Anmeldedaten sind ung&uuml;tig!";
-						document.getElementById("passwort").value = "";
-					}
+					//if(anfrage_login.readyState==4 && anfrage_login.status==200) {
+						let json_response = JSON.parse(anfrage_login.responseText);	
+						if(json_response.RECHTE==0 || json_response.RECHTE==1) {
+							sessionStorage.rechte = json_response.RECHTE;
+							//sessionStorage.benutzer = json_response.BENUTZER;
+							window.location.href = "../html/start_website.html";
+						} else {
+							document.getElementById("ausgabe").innerHTML = "<div class='ausgabe'>Diese Anmeldedaten sind ung&uuml;tig!</div>";//"Diese Anmeldedaten sind ung&uuml;tig!";
+							document.getElementById("passwort").value = "";
+						}
+				//	}
 				}
 				anfrage_login.open("POST", "../php/server_login.php");
 				anfrage_login.send(daten);
@@ -46,7 +47,6 @@
 		 
 			function getSalt() {
 				document.getElementById("ausgabe").innerHTML = "<div class='loader'></div>";
-
 
 				salt = "";
 		 

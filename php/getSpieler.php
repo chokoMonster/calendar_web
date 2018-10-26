@@ -11,11 +11,13 @@
 		$statement = $mysqli->prepare("select BENUTZER, VNAME, NNAME from teilnehmer where benutzer in (select teilnehmer from gruppierung where admin=?) order by nname");
 		$statement->bind_param("s", $_SESSION['user']);
 		$statement->execute();	 
-		$result = $statement->get_result();
+		$res = $statement->get_result();
 		 
-		while($row = $result->fetch_assoc()) {
-		  echo $row['BENUTZER'], "&", $row['VNAME'], " ", $row['NNAME'], ";";
+		$result = array();
+		while($row = $res->fetch_assoc()) {
+			$result[] = $row;
 		}
+		echo json_encode($result);
 		
 		mysqli_close($mysqli);
 	}

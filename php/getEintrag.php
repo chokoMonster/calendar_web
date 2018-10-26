@@ -18,8 +18,7 @@
 		$result = $statement->get_result();
 
 		while($row = $result->fetch_assoc()) {
-		  echo date("d.m.Y", strtotime($row['DATUM'])), "&", $row['NR'], "&", date("H:i", strtotime($row['BEGINN'])), "&", date("H:i", strtotime($row['ENDE'])),
-		  "&", $row['ALTERSKLASSE'], "&", $row['KATEGORIE'], "&", $row['LIGA'], "&", $row['TRAINER'], "&", $row['INTENSITAET'], "&", $row['ART'], "&", $row['GEGNER'], "&", $row['BEMERKUNG'], "&", $row['PASSIV'];
+			echo json_encode($row);
 		}
 		
 		mysqli_close($mysqli);

@@ -12,15 +12,12 @@
 		$statement = $mysqli->prepare("select BENUTZER, RECHTE from teilnehmer where benutzer=? and passwort=?");
 		$statement->bind_param("ss", $_POST['user'], $_POST['passwort']);
 		$statement->execute();
-	 
-		$result = $statement->get_result();
+	 	$result = $statement->get_result();
 	 
 		if ($result->num_rows == 1) {
 			$_SESSION['user'] = $_POST['user'];
 			$row = $result->fetch_assoc();		
-			echo $row['BENUTZER'], "&", $row['RECHTE'], "&";
-			echo "success";
-			
+			echo json_encode($row);
 		} else {
 			session_destroy();
 		}

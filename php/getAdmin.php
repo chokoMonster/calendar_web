@@ -9,11 +9,13 @@
 
 		$statement = $mysqli->prepare("select BENUTZER from teilnehmer where rechte=1");
 		$statement->execute();	 
-		$result = $statement->get_result();
-		 
-		while($row = $result->fetch_assoc()) {
-		  echo $row['BENUTZER'], ";";
+		$res = $statement->get_result();
+		
+		$result = array();
+		while($row = $res->fetch_assoc()) {
+			$result[] = $row;
 		}
+		echo json_encode($result);
 		
 		mysqli_close($mysqli);
 	}

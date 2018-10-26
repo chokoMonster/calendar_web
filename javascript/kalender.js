@@ -14,9 +14,7 @@ let liga = {
 	"sonstige3":"Sonstiges",
 }
 
-let category_array, league_array, age_array;
-
-/*let kategorie = {
+let kategorie = {
 	"mannschaft":"Mannschaft",
 	"individual":"Individual",
 	"stuetzpunkt":"St&uuml;tzpunkt",
@@ -24,11 +22,11 @@ let category_array, league_array, age_array;
 	"wurf":"Wurf",
 	"ausdauer":"Ausdauer",
 	"reha":"Rehabilitation",
-	"other_category":"Sonstiges",
-}*/
+	"sonstige2":"Sonstiges",
+}
 
 
-let ids_form = new Array('datum', 'passiv', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'cmb_age', 'cmb_category', 'cmb_league', 'trainer', 'int0', 'int1', 'int2', 'int3', 'int4', 'int5', 'int6', 'int7', 'int8', 'int9', 'training', 'spiel', 'gegner', 'bemerkung', 'speichern', 'loeschen');
+let ids_form = new Array('datum', 'passiv', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'alter', 'kategorie', 'liga', 'trainer', 'int0', 'int1', 'int2', 'int3', 'int4', 'int5', 'int6', 'int7', 'int8', 'int9', 'training', 'spiel', 'gegner', 'bemerkung', 'speichern', 'loeschen');
 let pflichtfelder = ['datum', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'trainer'];
 
 function init()
@@ -41,28 +39,6 @@ function init()
 		// AJAX mit IE6, IE5
 		anfrage=new ActiveXObject("Microsoft.XMLHTTP");
 		anfrage2=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-
-
-	anfrage.open("GET","../php/getValues.php?id=CATEGORY,LEAGUE", true);
-	anfrage.send();
-	
-	anfrage.onreadystatechange=function()
-	{
-		let json_values = new Array();
-		if(anfrage.readyState==4 && anfrage.status==200) {
-			json_values = JSON.parse(anfrage.responseText);
-		}
-
-		for (j in json_values) {
-			if(json_values[j].KEY=='CATEGORY') {
-				category_array[json_values[j].VALUE] = json_values[j].VALUE2;
-			} else if(json_values[j].KEY=='LEAGUE') {
-				league_array[json_values[j].VALUE] = json_values[j].VALUE2;
-			} else if(json_values[j].KEY=='AGE') {
-				age_array[json_values[j].VALUE] = json_values[j].VALUE2;
-			}
-		}
 	}
 }
 	
@@ -115,8 +91,7 @@ function ladeKalender()
 		selectedSpieler = "SESSIONUSER";
 	}
 	//let selectedSpieler = parent.kalender.document.getElementById('spieler').options[parent.kalender.document.getElementById('spieler').selectedIndex].value;
-	selectedSpieler="gerkat";
-	anfrage.open("GET","../../android/php/getEintraege.php?id="+selectedSpieler+"&monat="+(m+1)+"&jahr="+y, true);
+	anfrage.open("GET","../php/getEintraege.php?id="+selectedSpieler+"&monat="+(m+1)+"&jahr="+y, true);
 	anfrage.send();
 	
 	anfrage.onreadystatechange=function()
@@ -187,9 +162,9 @@ function ladeKalender()
 							pos_minimum = i;
 						}
 					}
-					let showText = category_array[termine_relevant[pos_minimum].KATEGORIE];
-					if(termine_relevant[pos_minimum].KATEGORIE=="mannschaft" || termine_relevant[pos_minimum].KATEGORIE=="other_category") {
-						showText = league_array[termine_relevant[pos_minimum].LIGA];
+					let showText = kategorie[termine_relevant[pos_minimum].KATEGORIE];
+					if(termine_relevant[pos_minimum].KATEGORIE=="mannschaft" || termine_relevant[pos_minimum].KATEGORIE=="sonstige2") {
+						showText = liga[termine_relevant[pos_minimum].LIGA];
 					}
 					anweisung += "<p class='tbl_eintrag' id='eintrag_" + datum_eintrag + "_" + termine_relevant[pos_minimum].NR + "' onclick='zeigeEintrag(this.id)'>" + (termine_relevant[pos_minimum].BEGINN).substring(0,5) + " " + showText +"</p>";
 					termine_relevant.splice(pos_minimum,1);
@@ -336,16 +311,16 @@ function formVorbereiten()
 	}
 	parent.formular.document.getElementById('gegner_feld').setAttribute('hidden', true);
 	
-	let elem_alter = parent.formular.document.getElementById('leer_age');
+	let elem_alter = parent.formular.document.getElementById('leer1');
 	elem_alter.removeAttribute('selected');
 	elem_alter.setAttribute('hidden', true);
 	
-	let elem_kategorie = parent.formular.document.getElementById('leer_category');
+	let elem_kategorie = parent.formular.document.getElementById('leer2');
 	elem_kategorie.removeAttribute('selected');
 	elem_kategorie.setAttribute('hidden', true);
 	
 	parent.formular.document.getElementById('liga_feld').removeAttribute('hidden');
-	let elem_liga = parent.formular.document.getElementById('leer_league');
+	let elem_liga = parent.formular.document.getElementById('leer3');
 	elem_liga.removeAttribute('selected');
 	elem_liga.setAttribute('hidden', true);
 }
@@ -381,51 +356,61 @@ function zeigeEintrag(id)
 	
 	anfrage2.onreadystatechange=function()
 	{	
-		if(anfrage2.responseText == "") {
-			return;
-		}
+		if(anfrage2.readyState==4 && anfrage2.status==200) {
+			for(let i=0; i<10; i++) {
+				parent.formular.document.getElementById('int'+i).checked=false;
+			}
+			parent.formular.document.getElementById('training').checked=false;
+			parent.formular.document.getElementById('spiel').checked=false;
+			
 
-		for(let i=0; i<10; i++) {
-			parent.formular.document.getElementById('int'+i).checked=false;
-		}
-		parent.formular.document.getElementById('training').checked=false;
-		parent.formular.document.getElementById('spiel').checked=false;
-		
-		//Rueckgabe im Format datum&nr&beginn&ende&alter&kategorie&liga&trainer&intensitaet&art&gegner&bemerkung&passiv
-		let werte = new Array();
-		werte = anfrage2.responseText.split("&");
+			let json_eintrag = JSON.parse(anfrage2.responseText);
+			json_eintrag.DATUM = new Date(json_eintrag.DATUM);
+			
+			parent.formular.document.getElementById('datum_save').value = parseDate(json_eintrag.DATUM);
 
-		parent.formular.document.getElementById('datum_save').value = werte[0];
-
-		parent.formular.document.getElementById('datum').value = werte[0];
-		parent.formular.document.getElementById('nr').value = werte[1];
-		parent.formular.document.getElementById('beginn_h').value = werte[2].split(":")[0];
-		parent.formular.document.getElementById('beginn_min').value = werte[2].split(":")[1];
-		parent.formular.document.getElementById('ende_h').value = werte[3].split(":")[0];
-		parent.formular.document.getElementById('ende_min').value = werte[3].split(":")[1];
-		parent.formular.document.getElementById(werte[4]).selected=true;
-		parent.formular.document.getElementById(werte[5]).selected=true;
-		parent.formular.document.getElementById(werte[6]).selected=true;
-		parent.formular.document.getElementById('trainer').value = werte[7];
-		parent.formular.document.getElementById('int'+werte[8]).checked =true;	
-		parent.formular.document.getElementById(werte[9]).checked=true;
-		parent.formular.document.getElementById('gegner').value = werte[10];
-		parent.formular.document.getElementById('bemerkung').value = werte[11];
-		
-		if(werte[12]=="1") {
-			parent.formular.document.getElementById('passiv').checked = true;
-		} else {
-			parent.formular.document.getElementById('passiv').checked = false;
-		}
-		if(werte[5]=="mannschaft" || werte[5]=="other_category") {
-			parent.formular.document.getElementById('liga_feld').removeAttribute('hidden');
-		} else {
-			parent.formular.document.getElementById('liga_feld').setAttribute('hidden', true);
-		}
-		if(werte[9]=="spiel") {
-			parent.formular.document.getElementById('gegner_feld').removeAttribute('hidden');
-			parent.formular.document.getElementById('cmb_category').selectedIndex = 0;
-			parent.formular.document.getElementById('cmb_category').setAttribute('disabled', true);
-		}
+			parent.formular.document.getElementById('datum').value = parseDate(json_eintrag.DATUM);
+			parent.formular.document.getElementById('nr').value = json_eintrag.NR;
+			parent.formular.document.getElementById('beginn_h').value = (json_eintrag.BEGINN).substring(0,2);
+			parent.formular.document.getElementById('beginn_min').value = (json_eintrag.BEGINN).substring(3,5);
+			parent.formular.document.getElementById('ende_h').value = (json_eintrag.ENDE).substring(0,2);
+			parent.formular.document.getElementById('ende_min').value = (json_eintrag.ENDE).substring(3,5);
+			parent.formular.document.getElementById(json_eintrag.ALTERSKLASSE).selected=true;
+			parent.formular.document.getElementById(json_eintrag.KATEGORIE).selected=true;
+			parent.formular.document.getElementById(json_eintrag.LIGA).selected=true;
+			parent.formular.document.getElementById('trainer').value = json_eintrag.TRAINER;
+			parent.formular.document.getElementById('int'+json_eintrag.INTENSITAET).checked =true;	
+			parent.formular.document.getElementById(json_eintrag.ART).checked=true;
+			parent.formular.document.getElementById('gegner').value = json_eintrag.GEGNER;
+			parent.formular.document.getElementById('bemerkung').value = json_eintrag.BEMERKUNG;
+			
+			if(json_eintrag.PASSIV=="1") {
+				parent.formular.document.getElementById('passiv').checked = true;
+			} else {
+				parent.formular.document.getElementById('passiv').checked = false;
+			}
+			if(json_eintrag.KATEGORIE=="mannschaft" || json_eintrag.KATEGORIE=="sonstige2") {
+				parent.formular.document.getElementById('liga_feld').removeAttribute('hidden');
+			} else {
+				parent.formular.document.getElementById('liga_feld').setAttribute('hidden', true);
+			}
+			if(json_eintrag.ART=="spiel") {
+				parent.formular.document.getElementById('gegner_feld').removeAttribute('hidden');
+				parent.formular.document.getElementById('kategorie').selectedIndex = 0;
+				parent.formular.document.getElementById('kategorie').setAttribute('disabled', true);
+			}
+		}	
 	}
+}
+
+function parseDate(date) {
+	let day = date.getDate();
+	if(day<10) {
+		day = "0" + day;
+	}
+	let month = date.getMonth()+1;
+	if(month<10) {
+		month = "0" + month;
+	}
+	return day + "." + month + "." + date.getFullYear();
 }
