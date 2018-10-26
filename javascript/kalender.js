@@ -2,7 +2,7 @@ let anfrage, anfrage2;
 //var benutzer = sessionStorage.benutzer;
 init();
 
-
+/*
 let liga = { 
 	//"dbbl":"Bundesliga",
 	//"dbbl2":"2.Bundesliga",
@@ -12,8 +12,9 @@ let liga = {
 	"bzl":"Bezirksliga",
 	//"natio":"Nationalmannschaft",
 	"sonstige3":"Sonstiges",
-}
+}*/
 
+/*
 let kategorie = {
 	"mannschaft":"Mannschaft",
 	"individual":"Individual",
@@ -23,10 +24,11 @@ let kategorie = {
 	"ausdauer":"Ausdauer",
 	"reha":"Rehabilitation",
 	"sonstige2":"Sonstiges",
-}
+}*/
 
+let category_array, league_array, age_array;
 
-let ids_form = new Array('datum', 'passiv', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'alter', 'kategorie', 'liga', 'trainer', 'int0', 'int1', 'int2', 'int3', 'int4', 'int5', 'int6', 'int7', 'int8', 'int9', 'training', 'spiel', 'gegner', 'bemerkung', 'speichern', 'loeschen');
+let ids_form = new Array('datum', 'passiv', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'cmb_age', 'cmb_category', 'cmb_league', 'trainer', 'int0', 'int1', 'int2', 'int3', 'int4', 'int5', 'int6', 'int7', 'int8', 'int9', 'training', 'spiel', 'gegner', 'bemerkung', 'speichern', 'loeschen');
 let pflichtfelder = ['datum', 'beginn_h', 'beginn_min', 'ende_h', 'ende_min', 'trainer'];
 
 function init()
@@ -39,6 +41,27 @@ function init()
 		// AJAX mit IE6, IE5
 		anfrage=new ActiveXObject("Microsoft.XMLHTTP");
 		anfrage2=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+
+	anfrage.open("GET","../php/getValues.php?id=CATEGORY,LEAGUE", true);
+	anfrage.send();
+	
+	anfrage.onreadystatechange=function()
+	{
+		let json_values = new Array();
+		if(anfrage.readyState==4 && anfrage.status==200) {
+			json_values = JSON.parse(anfrage.responseText);
+		}
+
+		for (j in json_values) {
+			if(json_values[j].KEY=='CATEGORY') {
+				category_array[json_values[j].VALUE] = json_values[j].VALUE2;
+			} else if(json_values[j].KEY=='LEAGUE') {
+				league_array[json_values[j].VALUE] = json_values[j].VALUE2;
+			} else if(json_values[j].KEY=='AGE') {
+				age_array[json_values[j].VALUE] = json_values[j].VALUE2;
+			}
+		}
 	}
 }
 	
@@ -162,9 +185,9 @@ function ladeKalender()
 							pos_minimum = i;
 						}
 					}
-					let showText = kategorie[termine_relevant[pos_minimum].KATEGORIE];
-					if(termine_relevant[pos_minimum].KATEGORIE=="mannschaft" || termine_relevant[pos_minimum].KATEGORIE=="sonstige2") {
-						showText = liga[termine_relevant[pos_minimum].LIGA];
+					let showText = category_array[termine_relevant[pos_minimum].KATEGORIE];
+					if(termine_relevant[pos_minimum].KATEGORIE=="mannschaft" || termine_relevant[pos_minimum].KATEGORIE=="other_category") {
+						showText = league_array[termine_relevant[pos_minimum].LIGA];
 					}
 					anweisung += "<p class='tbl_eintrag' id='eintrag_" + datum_eintrag + "_" + termine_relevant[pos_minimum].NR + "' onclick='zeigeEintrag(this.id)'>" + (termine_relevant[pos_minimum].BEGINN).substring(0,5) + " " + showText +"</p>";
 					termine_relevant.splice(pos_minimum,1);
@@ -311,16 +334,16 @@ function formVorbereiten()
 	}
 	parent.formular.document.getElementById('gegner_feld').setAttribute('hidden', true);
 	
-	let elem_alter = parent.formular.document.getElementById('leer1');
+	let elem_alter = parent.formular.document.getElementById('leer_age');
 	elem_alter.removeAttribute('selected');
 	elem_alter.setAttribute('hidden', true);
 	
-	let elem_kategorie = parent.formular.document.getElementById('leer2');
+	let elem_kategorie = parent.formular.document.getElementById('leer_category');
 	elem_kategorie.removeAttribute('selected');
 	elem_kategorie.setAttribute('hidden', true);
 	
 	parent.formular.document.getElementById('liga_feld').removeAttribute('hidden');
-	let elem_liga = parent.formular.document.getElementById('leer3');
+	let elem_liga = parent.formular.document.getElementById('leer_league');
 	elem_liga.removeAttribute('selected');
 	elem_liga.setAttribute('hidden', true);
 }
@@ -389,15 +412,15 @@ function zeigeEintrag(id)
 			} else {
 				parent.formular.document.getElementById('passiv').checked = false;
 			}
-			if(json_eintrag.KATEGORIE=="mannschaft" || json_eintrag.KATEGORIE=="sonstige2") {
+			if(json_eintrag.KATEGORIE=="mannschaft" || json_eintrag.KATEGORIE=="other_category") {
 				parent.formular.document.getElementById('liga_feld').removeAttribute('hidden');
 			} else {
 				parent.formular.document.getElementById('liga_feld').setAttribute('hidden', true);
 			}
 			if(json_eintrag.ART=="spiel") {
 				parent.formular.document.getElementById('gegner_feld').removeAttribute('hidden');
-				parent.formular.document.getElementById('kategorie').selectedIndex = 0;
-				parent.formular.document.getElementById('kategorie').setAttribute('disabled', true);
+				parent.formular.document.getElementById('cmb_category').selectedIndex = 0;
+				parent.formular.document.getElementById('cmb_category').setAttribute('disabled', true);
 			}
 		}	
 	}
